@@ -70,7 +70,7 @@ router.post('/api/register', (req, res) => {
 
     const sqlStr = "SELECT * FROM user_info WHERE user_name = '" + user_name + "' LIMIT 1"
     conn.query(sqlStr, (error, results, fields) => {
-        
+
         if (results[0]) {
             res.json({ err_code: 0, message: '该用户已存在!' });
         } else {
@@ -104,14 +104,87 @@ router.post('/api/register', (req, res) => {
             });
         }
     })
-
-
-
-
-
-
-
 })
+
+/**
+*  根据session中的用户id获取用户信息
+* */
+router.get('/api/user_info', (req, res) => {
+    // 获取参数
+    let userId = req.query.user_id || req.session.userId;
+
+    let sqlStr = "SELECT * FROM user_info WHERE id = " + userId + " LIMIT 1";
+    conn.query(sqlStr, (error, results, fields) => {
+        if (error) {
+            res.json({ err_code: 0, message: '请求用户数据失败' });
+        } else {
+            results = JSON.parse(JSON.stringify(results));
+            if (!results[0]) {
+                delete req.session.userId;
+                res.json({ error_code: 1, message: '请先登录' });
+            } else {
+                res.json({
+                    success_code: 200,
+                    message: {
+                        id: results[0].id,
+                        user_name: results[0].user_name || '',
+                        user_nickname: results[0].user_nickname || '',
+                        user_phone: results[0].user_phone || '',
+                        user_sex: results[0].user_sex || '',
+                        user_address: results[0].user_address || '',
+                        user_sign: results[0].user_sign || '',
+                        user_birthday: results[0].user_birthday || '',
+                        user_avatar: results[0].user_avatar || ''
+                    },
+                });
+            }
+        }
+    });
+});
+
+
+/**
+ * 修改/更新用户信息
+ */
+router.post('/api/update_user_info', (req, res) => {
+    // 获取客户端传过来的信息
+    const form = new formidable.IncomingForm();
+    form.uploadDir = config.uploadsAvatarPath;  // 上传图片放置的文件夹
+    form.keepExtensions = true; // 保持文件的原始扩展名
+    form.parse(req, (err, fields, files) => {
+        if (err) {
+            return next(err);
+        }
+        let id = fields.id;
+        let user_nickname = fields.user_nickname || '';
+        let user_sex = fields.user_sex || '';
+        let user_address = fields.user_address || '';
+        let user_birthday = fields.user_birthday || '';
+        let user_sign = fields.user_sign || '';
+        let user_avatar = 'http://localhost:' + config.port + '/avatar_uploads/avatar_default.jpg';
+        if (files.user_avatar) {
+            user_avatar = 'http://localhost:' + config.port + '/avatar_uploads/' + basename(files.user_avatar.path);
+        }
+
+        // 验证
+        if (!id) {
+            res.json({ err_code: 0, message: '修改用户信息失败!' });
+        }
+
+        // 更新数据
+        let sqlStr = "UPDATE user_info SET user_nickname = ? , user_sex = ?, user_address = ?, user_birthday = ?, user_sign = ?, user_avatar = ? WHERE id = " + id;
+        let strParams = [user_nickname, user_sex, user_address, user_birthday, user_sign, user_avatar];
+        conn.query(sqlStr, strParams, (error, results, fields) => {
+            if (error) {
+                console.log(error);
+                res.json({ err_code: 0, message: '修改用户信息失败!' });
+            } else {
+                res.json({ success_code: 200, message: '修改用户信息成功!' });
+            }
+        });
+    });
+});
+
 
 module.exports = router
 
