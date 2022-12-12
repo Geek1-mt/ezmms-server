@@ -156,6 +156,7 @@ router.post('/api/update_user_info', (req, res) => {
             return next(err);
         }
         let id = fields.id;
+        let user_phone = fields.user_phone || '';
         let user_nickname = fields.user_nickname || '';
         let user_sex = fields.user_sex || '';
         let user_address = fields.user_address || '';
@@ -164,6 +165,9 @@ router.post('/api/update_user_info', (req, res) => {
         let user_avatar = 'http://localhost:' + config.port + '/avatar_uploads/avatar_default.jpg';
         if (files.user_avatar) {
             user_avatar = 'http://localhost:' + config.port + '/avatar_uploads/' + basename(files.user_avatar.path);
+        } else {
+            //用户未修改头像，保留原头像
+            user_avatar = fields.user_avatar
         }
 
         // 验证
@@ -172,8 +176,8 @@ router.post('/api/update_user_info', (req, res) => {
         }
 
         // 更新数据
-        let sqlStr = "UPDATE user_info SET user_nickname = ? , user_sex = ?, user_address = ?, user_birthday = ?, user_sign = ?, user_avatar = ? WHERE id = " + id;
-        let strParams = [user_nickname, user_sex, user_address, user_birthday, user_sign, user_avatar];
+        let sqlStr = "UPDATE user_info SET user_phone = ? , user_nickname = ? , user_sex = ?, user_address = ?, user_birthday = ?, user_sign = ?, user_avatar = ? WHERE id = " + id;
+        let strParams = [user_phone, user_nickname, user_sex, user_address, user_birthday, user_sign, user_avatar];
         conn.query(sqlStr, strParams, (error, results, fields) => {
             if (error) {
                 console.log(error);
@@ -182,6 +186,45 @@ router.post('/api/update_user_info', (req, res) => {
                 res.json({ success_code: 200, message: '修改用户信息成功!' });
             }
         });
+    });
+});
+
+
+/**
+ * 修改用户密码
+ */
+router.post('/api/update_user_password', (req, res) => {
+    // 获取数据
+    let id = req.body.id;
+    let originPw = '';
+    let newPw = md5(md5(req.body.newPw) + S_KEY);
+    if (req.body.originPw) {
+        originPw = md5(md5(req.body.originPw) + S_KEY);
+    }
+
+    let sqlStr = "SELECT * FROM user_info WHERE id = " + id;
+    conn.query(sqlStr, (error, results, fields) => {
+        if (error) {
+            console.log(error);
+            res.json({ err_code: 0, message: '查询失败!' });
+        } else {
+            results = JSON.parse(JSON.stringify(results));
+            if (results[0]) {
+                // 用户存在
+                if (!results[0].user_pwd || (results[0].user_pwd && originPw === results[0].user_pwd)) {
+                    let sqlStr = "UPDATE user_info SET user_pwd = ? WHERE id = " + id;
+                    conn.query(sqlStr, [newPw], (error, results, fields) => {
+                        if (!error) {
+                            res.json({ success_code: 200, message: '修改密码成功!' });
+                        }
+                    });
+                } else if (originPw != results[0].user_pwd) {
+                    res.json({ err_code: 0, message: '输入的原密码错误!' });
+                }
+            } else {
+                res.json({ err_code: 0, message: '用户不存在!' });
+            }
+        }
     });
 });
 
