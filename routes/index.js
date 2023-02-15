@@ -13,7 +13,62 @@ import { basename } from 'path'
 const S_KEY = '@WaLQ1314?.LqFtK.Com.#'; // 盐
 const users = {} //用户信息
 
-/********************前台页面 *********************/
+/********************主前台页面 *********************/
+
+/**
+ * 获取轮播图
+ */
+router.get('/api/homebanner', (req, res) => {
+    let sqlStr = 'SELECT * FROM homebanner';
+    conn.query(sqlStr, (error, results, fields) => {
+        if (error) {
+            res.json({ err_code: 0, message: '请求轮播图失败' });
+            console.log(error);
+        } else {
+            results = JSON.parse(JSON.stringify(results));
+            res.json({ success_code: 200, message: results });
+        }
+    });
+});
+
+/**
+ * 获取商品的类别数量
+ */
+router.get('/api/category', (req, res) => {
+    let sqlStr = 'SELECT * FROM category';
+    conn.query(sqlStr, (error, results, fields) => {
+        if (error) {
+            res.json({ err_code: 0, message: '请求商品类别数失败' });
+            console.log(error);
+        } else {
+            results = JSON.parse(JSON.stringify(results));
+            res.json({ success_code: 200, message: results });
+        }
+    });
+});
+
+/**
+ * 获取首页商品数据
+ */
+router.get('/api/homeproductlist', (req, res) => {
+    // 获取总分类
+    let cateSqlStr = 'SELECT COUNT(*) FROM category';
+    conn.query(cateSqlStr, (error, results, fields) => {
+        if (!error) {
+            let sqlStr = '';
+            for (let i = 0; i < results[0]['COUNT(*)']; i++) {
+                sqlStr += 'SELECT * FROM recommend WHERE category = ' + (i + 1) + ' LIMIT 3;';
+            }
+            conn.query(sqlStr, (error, results, fields) => {
+                if (!error) {
+                    results = JSON.parse(JSON.stringify(results));
+                    res.json({ success_code: 200, message: results });
+                }
+            });
+        }
+    });
+});
+
 
 /**
  * 用户名+密码登录
