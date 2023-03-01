@@ -99,6 +99,34 @@ router.get('/api/comment', (req, res) => {
     });
 });
 
+/**
+ * 提交商品评论
+*/
+router.post('/api/postcomment', (req, res) => {
+    // 获取参数
+    let goods_id = req.body.goods_id;
+    let comment_detail = req.body.comment_detail;
+    let comment_rating = req.body.comment_rating;
+    let user_id = req.body.user_id;
+    const addSql = "INSERT INTO comments(goods_id, comment_detail, comment_rating, user_id) VALUES (?, ?, ?, ?)";
+    const addSqlParams = [goods_id, comment_detail, comment_rating, user_id];
+    conn.query(addSql, addSqlParams, (error, results, fields) => {
+        results = JSON.parse(JSON.stringify(results));
+        if (!error) {
+            // 更新数据
+            let sqlStr = "UPDATE recommend SET comments_count = comments_count + 1 WHERE goods_id = " + goods_id;
+            conn.query(sqlStr, (error, results, fields) => {
+                if (error) {
+                    console.log(error);
+                } else {
+                    res.json({ success_code: 200, message: "评论发布成功" });
+                }
+            });
+        }
+    });
+});
+
+
 
 
 
