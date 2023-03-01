@@ -69,6 +69,38 @@ router.get('/api/homeproductlist', (req, res) => {
     });
 });
 
+/**
+ * 获取商品详细数据
+*/
+router.get('/api/goodsdetail', (req, res) => {
+    // 获取参数
+    let goodsNo = req.query.goodsNo;
+    let sqlStr = 'SELECT * FROM recommend WHERE goods_id = ' + goodsNo;
+    conn.query(sqlStr, (error, results, fields) => {
+        if (!error) {
+            results = JSON.parse(JSON.stringify(results));
+            res.json({ success_code: 200, message: results });
+        }
+    });
+});
+
+/**
+ *请求商品评论
+*/
+router.get('/api/comment', (req, res) => {
+    // 获取参数
+    let goodsId = req.query.goodsId;
+    let sqlStr = 'SELECT user_info.id, user_info.user_name, user_info.user_nickname, comments.comment_detail, comments.comment_id, comments.comment_rating, comments.goods_id FROM user_info INNER JOIN comments ON user_info.id = comments.user_id WHERE goods_id = ' + goodsId;
+    conn.query(sqlStr, (error, results, fields) => {
+        if (!error) {
+            results = JSON.parse(JSON.stringify(results));
+            res.json({ success_code: 200, message: results });
+        }
+    });
+});
+
+
+
 
 /**
  * 用户名+密码登录
@@ -284,7 +316,8 @@ router.post('/api/update_user_password', (req, res) => {
 });
 
 
-module.exports = router
+// module.exports = router
+export default router
 
 
 
