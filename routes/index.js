@@ -126,6 +126,28 @@ router.post('/api/postcomment', (req, res) => {
     });
 });
 
+/**
+ * 获取各类别商品数据
+*/
+router.get('/api/categorygoodslist', (req, res) => {
+    // 获取参数
+    let category = req.query.category || 1
+    let pageNo = req.query.pageNo || 1;
+    let pageSize = req.query.count || 6;
+
+    let sqlStr = 'SELECT * FROM recommend WHERE category = ' + category + ' LIMIT ' + (pageNo - 1) * pageSize + ',' + pageSize;
+
+    conn.query(sqlStr, (error, results, fields) => {
+        if (error) {
+            console.log(error);
+            res.json({ err_code: 0, message: "" });
+        } else {
+            results = JSON.parse(JSON.stringify(results));
+            res.json({ success_code: 200, message: results });
+        }
+    });
+});
+
 
 
 
@@ -284,7 +306,6 @@ router.post('/api/update_user_info', (req, res) => {
             //用户未修改头像，保留原头像
             user_avatar = fields.user_avatar
         }
-
         // 验证
         if (!id) {
             res.json({ err_code: 0, message: '修改用户信息失败!' });
