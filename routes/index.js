@@ -149,6 +149,31 @@ router.get('/api/categorygoodslist', (req, res) => {
 });
 
 
+/**
+ *根据商品名称进行模糊搜索 
+*/
+router.post('/api/productsearch', (req, res) => {
+    // 获取参数
+    let keywords = req.body.keywords;
+    keywords = keywords.replace(/\s+/g, ' ');
+    keywords = keywords.replace(/(^\s*)|(\s*$)/g, '');
+    let keyArr = keywords.split(' ');
+    let sqlStr = 'SELECT * FROM recommend WHERE goods_name LIKE ';  // sql语句
+    keyArr.forEach((item, index, arr) => {
+        sqlStr += "'%" + item + "%'";
+        if (index != arr.length - 1) {
+            sqlStr += " OR goods_name LIKE ";
+        }
+    });
+    conn.query(sqlStr, (error, results, fields) => {
+        results = JSON.parse(JSON.stringify(results));
+        if (!error && results.length) {
+            res.json({ success_code: 200, message: results });
+        } else {
+            console.log(error);
+        }
+    });
+});
 
 
 
