@@ -394,6 +394,9 @@ router.post('/api/update_user_password', (req, res) => {
 
 /********************管理员服务 *******************/
 
+/**
+ * 管理员登录后台系统
+ */
 router.post('/api/adminlogin', (req, res) => {
     const account = req.body.username;
     const pwd = req.body.password;
@@ -421,6 +424,38 @@ router.post('/api/adminlogin', (req, res) => {
         }
     });
 });
+
+/**
+ * 管理员退出后台系统
+*/
+router.get('/api/adminlogout', (req, res) => {
+    console.log(req.session.adminId)
+    delete req.session.adminId;
+
+    res.json({
+        success_code: 200,
+        message: "退出登录成功"
+    });
+});
+
+/**
+ *获取所有商品数据 
+*/
+router.get('/api/getallgoods', (req, res) => {
+
+    let sqlStr = 'SELECT * FROM recommend';
+
+    conn.query(sqlStr, (error, results, fields) => {
+        if (error) {
+            console.log(error);
+            res.json({ err_code: 0, message: '请求商品数据失败' });
+        } else {
+            results = JSON.parse(JSON.stringify(results));
+            res.json({ success_code: 200, message: results });
+        }
+    });
+});
+
 
 
 
