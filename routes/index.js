@@ -176,6 +176,8 @@ router.post('/api/productsearch', (req, res) => {
 });
 
 
+/*********************用户服务 *************************/
+
 
 /**
  * 用户名+密码登录
@@ -222,6 +224,7 @@ router.post('/api/login', (req, res) => {
         }
     });
 });
+
 
 /**
  * 用户注册
@@ -388,6 +391,38 @@ router.post('/api/update_user_password', (req, res) => {
         }
     });
 });
+
+/********************管理员服务 *******************/
+
+router.post('/api/adminlogin', (req, res) => {
+    const account = req.body.username;
+    const pwd = req.body.password;
+    const md5Pwd = md5(md5(req.body.password) + S_KEY);
+
+    if (!account || !pwd) {
+        res.json({ error_code: 0, message: "账号和密码不得为空！" });
+    }
+
+    let sqlStr = "SELECT * FROM administrators WHERE account = '" + account + "'";
+    conn.query(sqlStr, (error, results, fields) => {
+        if (error) {
+            console.log(error);
+            res.json({ error_code: 0, message: "服务器内部错误！" });
+        } else if (results[0]) {
+            let user = JSON.parse(JSON.stringify(results[0]));
+            if (md5Pwd === user['pwd']) {
+                req.session.adminId = user['id'];
+                res.json({ success_code: 200, message: "登录成功！" });
+            } else {
+                res.json({ error_code: 0, message: "密码错误！" });
+            }
+        } else {
+            res.json({ err_code: 0, message: "用户不存在！" });
+        }
+    });
+});
+
+
 
 
 // module.exports = router
