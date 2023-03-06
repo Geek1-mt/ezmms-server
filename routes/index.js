@@ -457,6 +457,52 @@ router.get('/api/getallgoods', (req, res) => {
 });
 
 
+/**
+ * 删除商品
+*/
+router.post('/api/delete_goods', (req, res) => {
+    // 获取数据
+    const goods_id = req.body.goods_id;
+
+    let sqlStr = "DELETE FROM recommend WHERE goods_id =" + goods_id;
+    conn.query(sqlStr, (error, results, fields) => {
+        if (error) {
+            console.log(error);
+            res.json({ err_code: 0, message: '删除失败!' });
+        } else {
+            let sqlStr2 = "DELETE FROM cart WHERE goods_id =" + goods_id;
+            conn.query(sqlStr, (error, results, fields) => {
+                if (error) {
+                    console.log(error);
+                    res.json({ err_code: 0, message: '删除失败!' });
+                } else {
+                    res.json({ success_code: 200, message: '删除成功!' });
+                }
+            });
+        }
+    });
+});
+
+/**
+ *获取所有用户数据 
+*/
+router.get('/api/allusers', (req, res) => {
+
+    let sqlStr = 'SELECT id, user_name, user_phone, user_nickname, user_address, user_avatar FROM user_info';
+
+    conn.query(sqlStr, (error, results, fields) => {
+        if (error) {
+            console.log(error);
+            res.json({ err_code: 0, message: '请求用户数据失败' });
+        } else {
+            results = JSON.parse(JSON.stringify(results));
+            res.json({ success_code: 200, message: results });
+        }
+    });
+});
+
+
+
 
 
 
