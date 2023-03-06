@@ -484,6 +484,89 @@ router.post('/api/delete_goods', (req, res) => {
 });
 
 /**
+ *更新商品信息 
+*/
+router.post('/api/update_goodsinfo', (req, res) => {
+    // 获取数据
+    const goods_id = req.body.goods_id;
+    const goods_name = req.body.goods_name;
+    const short_name = req.body.short_name;
+    const price = req.body.price;
+    const counts = req.body.counts;
+    const category = req.body.category;
+
+    let sqlStr = "UPDATE recommend SET goods_name = ?, short_name = ?, price = ?, counts = ?, category = ? WHERE goods_id = " + goods_id;
+    let strParams = [goods_name, short_name, price, counts, category];
+    conn.query(sqlStr, strParams, (error, results, fields) => {
+        if (error) {
+            console.log(error);
+            res.json({ err_code: 0, message: '修改失败!' });
+        } else {
+            res.json({ success_code: 200, message: '修改成功!' });
+        }
+    });
+});
+
+/**
+ * 添加上架商品
+*/
+router.post('/api/addgoods', (req, res) => {
+    // 获取客户端传过来的商品信息
+    const form = new formidable.IncomingForm();
+    form.uploadDir = config.uploadsGoodsPath;  // 上传图片放置的文件夹
+    form.keepExtensions = true; // 保持文件的原始扩展名
+    form.parse(req, (err, fields, files) => {
+        if (err) {
+            return next(err);
+        }
+        let goods_id = fields.goods_id;
+        let goods_name = fields.goods_name;
+        let short_name = fields.short_name;
+        let price = fields.price;
+        let normal_price = price + 300;
+        let market_price = price + 500;
+        let sales_tip = fields.sales_tip;
+        let category = fields.category;
+        let comments_count = 0;
+        let counts = fields.counts;
+        //保存商品图片
+        let thumb_url = 'http://localhost:' + config.port + '/uploads/' + basename(files.goods_img.path);
+        let image_url = 'http://localhost:' + config.port + '/uploads/' + basename(files.goods_img.path);
+        let hd_thumb_url = 'http://localhost:' + config.port + '/uploads/' + basename(files.goods_img.path);
+
+        let sql_str = "SELECT * FROM recommend WHERE goods_id = " + goods_id;
+        conn.query(sql_str, (error, results, fields) => {
+            if (error) {
+                res.json({ err_code: 0, message: '服务器内部错误!' });
+            } else {
+                results = JSON.parse(JSON.stringify(results));
+                if (results[0]) { // 商品已经存在
+                    res.json({ success_code: 500, message: '该商品已存在' });
+                } else { // 商品不存在
+                    let add_sql = "INSERT INTO recommend(goods_id, goods_name, short_name, thumb_url, image_url, hd_thumb_url, price, normal_price, market_price, sales_tip, category, counts, comments_count) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                    let sql_params = [goods_id, goods_name, short_name, thumb_url, image_url, hd_thumb_url, price, normal_price, market_price, sales_tip, category, counts, comments_count];
+                    conn.query(add_sql, sql_params, (error, results, fields) => {
+                        if (error) {
+                            console.log(error);
+                            res.json({ err_code: 0, message: '加入失败!' });
+                        } else {
+                            let sqlStr = "UPDATE category SET cate_counts = cate_counts + 1  WHERE cate_id = " + category;
+                            conn.query(sqlStr, [], (error, results, fields) => {
+                                if (error) {
+                                    console.log(error);
+                                } else {
+                                    res.json({ success_code: 200, message: '加入成功!' });
+                                }
+                            });
+                        }
+                    });
+                }
+            }
+        });
+    });
+});
+
+/**
  *获取所有用户数据 
 */
 router.get('/api/allusers', (req, res) => {
