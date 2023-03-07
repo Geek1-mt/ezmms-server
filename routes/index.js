@@ -392,6 +392,117 @@ router.post('/api/update_user_password', (req, res) => {
     });
 });
 
+/****************购物车服务 ***********************/
+
+/**
+ * 请求购物车数据
+*/
+router.get('/api/cart_goods', (req, res) => {
+    // 获取参数
+    let user_id = req.query.user_id;
+    let sqlStr = "SELECT * FROM cart WHERE user_id =" + user_id;
+    conn.query(sqlStr, (error, results, fields) => {
+        if (error) {
+            console.log(error);
+            res.json({ err_code: 0, message: '请求购物车数据失败' });
+        } else {
+            res.json({ success_code: 200, message: results });
+        }
+    });
+});
+
+/**
+ * 添加商品至购物车 
+*/
+router.post('/api/cart_addgoods', (req, res) => {
+    // 验证用户
+    let user_id = req.body.user_id;
+    if (!user_id) {
+        res.json({ err_code: 0, message: '非法用户' });
+        return;
+    }
+    /* if(!user_id || user_id !== req.session.userId){
+         console.log( req.session.userId);
+         res.json({err_code:0, message:'非法用户'});
+         return;
+     }
+    */
+    // 获取客户端传过来的商品信息
+    let goods_id = req.body.goods_id;
+    let goods_name = req.body.goods_name;
+    let thumb_url = req.body.thumb_url;
+    let price = req.body.price;
+    let buy_count = req.body.buy_count;
+    let is_pay = 0; // 0 未购买 1购买
+    let counts = req.body.counts;
+
+    let sql_str = "SELECT * FROM cart WHERE goods_id = " + goods_id + " AND user_id=" + user_id + " LIMIT 1";
+    conn.query(sql_str, (error, results, fields) => {
+        if (error) {
+            res.json({ err_code: 0, message: '服务器内部错误!' });
+        } else {
+            results = JSON.parse(JSON.stringify(results));
+            if (results[0]) { // 商品已经存在
+                res.json({ success_code: 200, message: '该商品已在购物车中' });
+            } else { // 商品不存在
+                let add_sql = "INSERT INTO cart(goods_id, goods_name, thumb_url, price, buy_count, is_pay, user_id, counts) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+                let sql_params = [goods_id, goods_name, thumb_url, price, buy_count, is_pay, user_id, counts];
+                conn.query(add_sql, sql_params, (error, results, fields) => {
+                    if (error) {
+                        res.json({ err_code: 0, message: '加入购物车失败!' });
+                        console.log(error);
+                    } else {
+                        res.json({ success_code: 200, message: '加入购物车成功!' });
+                    }
+                });
+            }
+        }
+    });
+
+});
+
+/**
+ * 删除单个购物车商品
+*/
+router.post('/api/delete_cart_good', (req, res) => {
+    // 获取数据
+    const goods_id = req.body.goods_id;
+    const user_id = req.body.user_id;
+
+    let sqlStr = "DELETE FROM cart WHERE goods_id =" + goods_id + " AND user_id = " + user_id;
+    conn.query(sqlStr, (error, results, fields) => {
+        if (error) {
+            console.log(error);
+            res.json({ err_code: 0, message: '删除失败!' });
+        } else {
+            res.json({ success_code: 200, message: '删除单个商品成功!' });
+        }
+    });
+
+});
+
+/**
+ *清空购物车 
+*/
+router.post('/api/delete_cart_all_goods', (req, res) => {
+    // 获取数据
+    const user_id = req.body.user_id;
+
+    let sqlStr = "DELETE FROM cart WHERE user_id = " + user_id;
+    conn.query(sqlStr, (error, results, fields) => {
+        if (error) {
+            console.log(error);
+            res.json({ err_code: 0, message: '删除失败!' });
+        } else {
+            res.json({ success_code: 200, message: '清空购物车成功!' });
+        }
+    });
+
+});
+
+
+
+
 /********************管理员服务 *******************/
 
 /**
