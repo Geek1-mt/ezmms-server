@@ -215,7 +215,8 @@ router.post('/api/login', (req, res) => {
                             user_address: results[0].user_address || '',
                             user_sign: results[0].user_sign || '',
                             user_birthday: results[0].user_birthday || '',
-                            user_avatar: results[0].user_avatar || ''
+                            user_avatar: results[0].user_avatar || '',
+                            user_balance: results[0].user_balance || ''
                         },
                         info: '登录成功!'
                     });
@@ -299,7 +300,8 @@ router.get('/api/user_info', (req, res) => {
                         user_address: results[0].user_address || '',
                         user_sign: results[0].user_sign || '',
                         user_birthday: results[0].user_birthday || '',
-                        user_avatar: results[0].user_avatar || ''
+                        user_avatar: results[0].user_avatar || '',
+                        user_balance: results[0].user_balance || ''
                     },
                 });
             }
