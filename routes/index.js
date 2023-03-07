@@ -367,7 +367,6 @@ router.post('/api/update_user_password', (req, res) => {
     if (req.body.originPw) {
         originPw = md5(md5(req.body.originPw) + S_KEY);
     }
-
     let sqlStr = "SELECT * FROM user_info WHERE id = " + id;
     conn.query(sqlStr, (error, results, fields) => {
         if (error) {
@@ -393,6 +392,49 @@ router.post('/api/update_user_password', (req, res) => {
         }
     });
 });
+
+
+/**
+ *用户充值 
+*/
+router.post('/api/recharge', (req, res) => {
+    //获取数据
+    let id = req.body.id
+    //参数类型转换为int
+    let originBl = parseInt(req.body.originBl)
+    let newBl = 0
+    if (req.body.chargeNum) {
+        newBl = originBl + parseInt(req.body.chargeNum)
+    }
+    //console.log(id, originBl, newBl)
+    let sqlStr = "SELECT * FROM user_info WHERE id = " + id;
+    conn.query(sqlStr, (error, results, fields) => {
+        if (error) {
+            console.log(error);
+            res.json({ err_code: 0, message: '查询失败!' });
+        } else {
+            results = JSON.parse(JSON.stringify(results));
+            if (results[0]) { // 用户存在
+                if (results[0].user_balance === originBl) {
+                    let sqlStr = "UPDATE user_info SET user_balance = ? WHERE id = " + id;
+                    conn.query(sqlStr, [newBl], (error, results, fields) => {
+                        if (!error) {
+                            res.json({ success_code: 200, message: '充值成功!' });
+                        }
+                    });
+                } else {
+                    res.json({ err_code: 0, message: "充值失败" })
+                }
+            } else {
+                res.json({ err_code: 0, message: '充值发生错误!' });
+            }
+        }
+    });
+})
+
+
+
+
 
 /****************购物车服务 ***********************/
 
