@@ -402,7 +402,7 @@ router.post('/api/recharge', (req, res) => {
     let id = req.body.id
     //参数类型转换为int
     let originBl = parseInt(req.body.originBl)
-    let newBl = 0
+    let newBl 
     if (req.body.chargeNum) {
         newBl = originBl + parseInt(req.body.chargeNum)
     }
