@@ -401,10 +401,10 @@ router.post('/api/recharge', (req, res) => {
     //获取数据
     let id = req.body.id
     //参数类型转换为int
-    let originBl = parseInt(req.body.originBl)
-    let newBl 
+    let originBl = parseFloat(req.body.originBl)
+    let newBl
     if (req.body.chargeNum) {
-        newBl = originBl + parseInt(req.body.chargeNum)
+        newBl = originBl + parseFloat(req.body.chargeNum) * 100.0
     }
     //console.log(id, originBl, newBl)
     let sqlStr = "SELECT * FROM user_info WHERE id = " + id;
@@ -526,6 +526,59 @@ router.post('/api/delete_cart_good', (req, res) => {
 });
 
 /**
+ *修改单个商品的数量 
+*/
+router.post('/api/change_goods_count', (req, res) => {
+    // 获取数据
+    const goods_id = req.body.goods_id;
+    const buy_count = req.body.count;
+    const user_id = req.body.user_id;
+
+    let sqlStr = "UPDATE cart SET buy_count = ? WHERE goods_id = " + goods_id + " AND user_id = " + user_id;
+    let strParams = [buy_count];
+    conn.query(sqlStr, strParams, (error, results, fields) => {
+        if (error) {
+            console.log(error);
+            res.json({ err_code: 0, message: '修改商品数量失败!' });
+        } else {
+            res.json({ success_code: 200, message: '修改商品数量成功!' });
+        }
+    });
+});
+
+
+/**
+ * 结算后更新单个商品的库存
+*/
+router.post('/api/update_goods_storage', (req, res) => {
+
+    //获取数据
+    
+    let user_id = req.body.id;
+    let goods_id = req.body.goods_id;
+    let originCount = parseInt(req.body.counts)
+    let buyCount = parseInt(req.body.shopNum)
+    let newCount = originCount - buyCount
+    let sqlStr = "SELECT * FROM user_info WHERE id = " + user_id;
+    conn.query(sqlStr, (error, results, fields) => {
+        if (error) {
+            console.log(error);
+            res.json({ err_code: 0, message: '查询失败!' });
+        } else {
+            let sql_str = "UPDATE recommend SET counts = ? WHERE goods_id = " + goods_id
+            conn.query(sql_str, [newCount], (error, results, fields) => {
+                if (error) {
+                    console.log(error);
+                    res.json({ err_code: 0, message: '库存更新失败!' });
+                } else {
+                    res.json({ success_code: 200, message: '库存更新成功!' });
+                }
+            });
+        }
+    })
+})
+
+/**
  *清空购物车 
 */
 router.post('/api/delete_cart_all_goods', (req, res) => {
@@ -533,6 +586,7 @@ router.post('/api/delete_cart_all_goods', (req, res) => {
     const user_id = req.body.user_id;
 
     let sqlStr = "DELETE FROM cart WHERE user_id = " + user_id;
+
     conn.query(sqlStr, (error, results, fields) => {
         if (error) {
             console.log(error);
@@ -544,6 +598,47 @@ router.post('/api/delete_cart_all_goods', (req, res) => {
 
 });
 
+
+/**
+ *购物车结算 
+*/
+router.post('/api/cart_settlement', (req, res) => {
+    // 获取数据
+    let id = req.body.id;
+    let originBl = parseFloat(req.body.user_balance)
+    let totalPrice = (parseFloat(req.body.totalPrice)) * 100.0
+    let newBl
+
+    console.log(id, originBl, totalPrice)
+
+    //扣除账户余额
+
+    let sqlStr = "SELECT * FROM user_info WHERE id = " + id;
+    conn.query(sqlStr, (error, results, fields) => {
+        if (error) {
+            console.log(error);
+            res.json({ err_code: 0, message: '查询失败!' });
+        } else {
+            results = JSON.parse(JSON.stringify(results));
+            if (results[0].user_balance === originBl) {
+                // 用户存在
+                if (results[0].user_balance >= totalPrice) {
+                    newBl = originBl - totalPrice
+                    let sqlStr = "UPDATE user_info SET user_balance = ? WHERE id = " + id;
+                    conn.query(sqlStr, [newBl], (error, results, fields) => {
+                        if (!error) {
+                            res.json({ success_code: 200, message: '结算成功!' });
+                        }
+                    });
+                } else if (results[0].user_balance < totalPrice) {
+                    res.json({ err_code: 0, message: '结算失败,您的余额不足' });
+                }
+            } else {
+                res.json({ err_code: 0, message: '结算失败' });
+            }
+        }
+    });
+});
 
 
 
