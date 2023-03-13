@@ -241,7 +241,7 @@ router.post('/api/register', (req, res) => {
             res.json({ err_code: 0, message: '该用户已存在!' });
         } else {
             // 新用户
-            const addSql = "INSERT INTO user_info(user_name, user_pwd, user_avatar) VALUES (?, ?, ?)";
+            const addSql = "INSERT INTO user_info(user_name, user_pwd, user_avatar, user_balance) VALUES (?, ?, ?, 2000)";
             const addSqlParams = [user_name, user_pwd, 'http://localhost:' + config.port + '/avatar_uploads/avatar_default.jpg'];
             conn.query(addSql, addSqlParams, (error, results, fields) => {
                 results = JSON.parse(JSON.stringify(results));
@@ -260,7 +260,8 @@ router.post('/api/register', (req, res) => {
                                     id: results[0].id,
                                     user_name: results[0].user_name || '',
                                     user_nickname: results[0].user_nickname || '',
-                                    user_avatar: results[0].user_avatar || ''
+                                    user_avatar: results[0].user_avatar || '',
+                                    user_balance: results[0].user_balance || ''
                                 },
                                 info: '注册成功！'
                             });
@@ -553,7 +554,7 @@ router.post('/api/change_goods_count', (req, res) => {
 router.post('/api/update_goods_storage', (req, res) => {
 
     //获取数据
-    
+
     let user_id = req.body.id;
     let goods_id = req.body.goods_id;
     let originCount = parseInt(req.body.counts)
