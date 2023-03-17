@@ -709,7 +709,7 @@ router.get('/api/getallgoods', (req, res) => {
 
 
 /**
- * 删除商品
+ * 下架商品
 */
 router.post('/api/delete_goods', (req, res) => {
     // 获取数据
